@@ -1,18 +1,18 @@
 # 집사 개발 규칙 (하네스)
 
 > 초안 · 소희 작성 → 예준(개발팀장)과 확정 후 `harness` 레포에 올림
-> ⭐ = 추천안. 선택지가 있는 곳은 예준과 정해서 하나만 남기기.
+> ⭐ = 추천안. 남은 선택지는 예준과 정해서 하나만 남기기.
 
-## 0. 확정할 것 (예준과 논의)
+## 0. 결정 사항
 
-| # | 항목 | 추천안 ⭐ | 대안 |
-|---|---|---|---|
-| 1 | 브랜치 전략 | `main` + 작업 브랜치 (GitHub Flow) | `main` + `dev` + 작업 브랜치 |
-| 2 | 머지 방식 | Squash merge | Merge commit |
-| 3 | 승인 인원 | 1명 | 2명 |
-| 4 | 리뷰 기한 | 요청 후 24시간 | 48시간 |
-| 5 | 레포 공개 여부 | 공개 (main 보호 강제 가능) | 비공개 (보호 강제 불가, 규칙으로만) |
-| 6 | 커밋 언어 | 타입은 영어, 내용은 한국어 | 전부 영어 |
+| # | 항목 | 결정 / 추천안 ⭐ | 대안 | 상태 |
+|---|---|---|---|---|
+| 1 | 브랜치 전략 | 기능 브랜치 → `dev` → `main` | — | ✅ 확정 |
+| 2 | 머지 방식 | 기능→`dev`: Squash / `dev`→`main`: Merge commit | — | ✅ 확정 |
+| 3 | 승인 인원 | 1명 ⭐ | 2명 | 예준과 논의 |
+| 4 | 리뷰 기한 | 요청 후 24시간 ⭐ | 48시간 | 예준과 논의 |
+| 5 | 레포 공개 여부 | 전부 공개 (보호 규칙 강제 가능) | — | ✅ 확정 |
+| 6 | 커밋 언어 | 타입은 영어, 내용은 한국어 ⭐ | 전부 영어 | 예준과 논의 |
 
 ---
 
@@ -24,17 +24,35 @@
 | `frontend` | React 웹(모바일 기준) | 석현 |
 | `ai` (생성 예정) | FastAPI OCR·마스킹·AI 검토 | 소희 |
 | `harness` | 이 문서, 공용 규칙·템플릿 | 예준·소희 |
-| `.github` (생성 추천) | 조직 전체 기본 이슈·PR 템플릿 | 예준 |
+| `.github` | 조직 전체 기본 이슈·PR 템플릿 | 예준 |
 
-> 조직에 `.github` 레포를 만들고 템플릿을 넣으면 모든 레포에 같은 템플릿이 적용됨.
+> 이슈·PR 템플릿은 조직의 `.github` 레포에 있음. 모든 레포에 같은 템플릿이 적용됨. 템플릿을 바꿀 땐 `.github` 레포를 수정.
+> 모든 레포는 **공개**. 그래서 `.env`·키·실제 계약서는 절대 커밋하지 않기 (10번).
 
 ## 2. 브랜치
 
-### 전략 ⭐ GitHub Flow
-- `main` = 언제든 배포 가능한 상태. **직접 푸시 금지.**
-- 모든 작업은 `main`에서 브랜치를 따서 PR로 합침.
-- 추천 이유: 4명·5주 프로젝트이고, 레포가 역할별로 나뉘어 충돌이 적음. 브랜치가 하나 더 있으면 관리만 늘어남.
-- 대안(`dev` 추가): dev용 EC2를 따로 띄우기로 하면 그때 `dev`를 추가.
+### 전략: 기능 브랜치 → `dev` → `main`
+```
+feat/12-login-api ─┐
+fix/31-upload-...  ─┼─(Squash)─▶ dev ─(Merge commit, 배포 때만)─▶ main ─▶ EC2
+docs/3-api-spec   ─┘
+```
+| 브랜치 | 역할 | 누가 합치나 |
+|---|---|---|
+| `main` | 배포된 코드. EC2는 항상 `main`을 받음 | 배포 담당(예준)이 `dev`→`main` PR로만 |
+| `dev` | **기본 브랜치.** 기능이 모이는 통합 브랜치 | 각 작업자가 PR로 |
+| 기능 브랜치 | 작업 하나 | 작업자 |
+
+- **기능 브랜치는 항상 `dev`에서 따기.** PR의 base도 `dev`.
+- `main`, `dev` 모두 **직접 푸시 금지.**
+- `main`에는 배포할 때만 `dev`를 합침 (마일스톤, 시연 전 등).
+
+```bash
+git switch dev && git pull
+git switch -c feat/12-login-api
+# 작업 후
+git push -u origin feat/12-login-api   # → GitHub에서 base: dev 로 PR
+```
 
 ### 이름
 ```
@@ -50,7 +68,7 @@
 
 - 소문자, 단어는 `-`로 연결, 영어로.
 - 이슈 없이 브랜치 만들지 않기. (오타 수정 같은 아주 작은 건 예외 `chore/readme-typo`)
-- 머지되면 브랜치 삭제 (GitHub 설정에서 자동 삭제 켜기).
+- 머지되면 기능 브랜치 삭제 (GitHub 설정에서 자동 삭제 켜기). `dev`·`main`은 보호 규칙으로 삭제가 막혀 있음.
 
 ## 3. 커밋 메시지
 
@@ -82,7 +100,8 @@ infra: EC2 nginx 리버스 프록시 설정 (#8)
 ### 규칙
 - 제목 50자 이내, 끝에 마침표 X. "~추가", "~수정", "~삭제"처럼 끝내기.
 - 커밋 하나 = 변경 하나. "로그인 + 업로드 + 오타" 한 번에 커밋 금지.
-- 작업 브랜치 안의 커밋은 자유롭게 해도 됨. Squash merge면 **PR 제목이 main의 커밋 메시지**가 되므로 PR 제목을 이 형식으로 쓰기.
+- 작업 브랜치 안의 커밋은 자유롭게 해도 됨. Squash merge라서 **PR 제목이 `dev`에 남는 커밋 메시지**가 되므로 PR 제목을 이 형식으로 쓰기.
+- `dev`→`main` 머지 커밋 메시지: `release: v0.1.0 (12/9 첫 연동)`
 
 ## 4. 이슈
 
@@ -128,13 +147,14 @@ infra: EC2 nginx 리버스 프록시 설정 (#8)
 ## 5. PR
 
 ### 규칙
-- **1 이슈 = 1 PR.** 본문에 `Closes #12` 쓰면 머지 시 이슈 자동 종료.
+- **base 브랜치는 `dev`.** (`main`으로 PR 올리지 않기. 기본 브랜치가 `dev`라 기본값 그대로 두면 됨)
+- **1 이슈 = 1 PR.** 본문에 `Closes #12` 쓰면 `dev`에 머지될 때 이슈 자동 종료 (`dev`가 기본 브랜치라서 가능).
 - 제목은 커밋 형식: `feat: 회원가입 API 추가 (#12)`
 - 크기: 변경 400줄 이하 권장. 넘으면 쪼개기.
 - 아직 작업 중이면 **Draft PR**로 올려 방향 먼저 확인받기.
 - 올리기 전: 로컬 실행·테스트 통과, 불필요한 로그·주석 제거, `.env` 미포함 확인.
 
-### PR 템플릿
+### PR 템플릿 (조직 `.github` 레포에 있음)
 ```markdown
 ## 관련 이슈
 Closes #
@@ -148,10 +168,16 @@ Closes #
 ## 스크린샷 (화면 변경 시)
 
 ## 체크리스트
+- [ ] base 브랜치가 `dev`
 - [ ] 로컬에서 실행·테스트 확인
 - [ ] `.env`, 키, 실제 개인정보 없음
 - [ ] API 형식이 바뀌었다면 명세 문서도 수정
 ```
+
+### 배포 PR (`dev` → `main`)
+- 제목: `release: v0.1.0 (12/9 첫 연동)`
+- 본문: 이번에 포함된 PR 번호 목록, 배포 후 확인할 항목
+- 올리는 사람: 예준 / 승인: 소희 또는 해당 기능 담당자 1명
 
 ## 6. 리뷰
 
@@ -177,51 +203,78 @@ Closes #
 
 ## 7. 머지
 
+### 기능 브랜치 → `dev` (Squash merge)
 1. 승인 1명 이상 + 충돌 없음 확인
-2. **작성자가 직접** Squash merge ⭐
-3. 브랜치 삭제
+2. **작성자가 직접** `Squash and merge`
+3. 기능 브랜치 삭제 (자동)
 4. 연결된 이슈 닫혔는지, 보드 카드가 `완료`로 갔는지 확인
 
-- 충돌은 작성자가 `main`을 받아 해결 후 다시 푸시.
+- 충돌은 작성자가 `dev`를 받아 해결 후 다시 푸시: `git switch feat/12-login-api && git pull origin dev`
 - 다른 사람 PR을 대신 머지하지 않기 (급하면 디스코드로 확인).
 
-## 8. main 보호
+### `dev` → `main` (Merge commit, 배포 때만)
+1. 예준이 배포 PR 생성 (5번 참고)
+2. 승인 1명 후 `Create a merge commit`으로 머지 (**Squash 하지 않기.** Squash하면 다음 배포 때 `dev`와 `main` 이력이 어긋나 충돌이 남)
+3. 9번 배포 절차 진행
 
-### 규칙 (설정과 상관없이 지킴)
-- `main` 직접 푸시 금지, force push 금지.
+## 8. `main`·`dev` 보호
+
+### 규칙
+- `main`, `dev` 직접 푸시 금지, force push 금지.
 - 실수로 푸시했으면 바로 디스코드에 알리고 `git revert`로 되돌린 뒤 PR로 다시.
 
 ### GitHub 설정 (예준, 레포마다)
-`Settings → Rules → Rulesets → New branch ruleset`
-- Target: `main` (Default branch)
-- ✅ Restrict deletions
-- ✅ Require a pull request before merging → Required approvals: `1`
-- ✅ Block force pushes
-- Bypass list: 비워두기
-- 추가로 `Settings → General → Automatically delete head branches` 켜기
-- 머지 방식은 `Allow squash merging`만 켜기 ⭐
 
-> ⚠️ 무료 Organization은 **비공개 레포에 보호 규칙이 강제되지 않음.** 레포를 공개로 바꾸면 강제됨 ⭐ (공개 전 `.env`·키·실제 계약서가 커밋 이력에 없는지 확인). 비공개를 유지하면 위 규칙은 약속으로만 지켜야 함.
+**① `dev` 브랜치 만들기**
+레포 메인 화면 → 브랜치 선택(`main` 버튼) → `dev` 입력 → `Create branch dev from main`
+(또는 터미널: `git switch main && git pull && git switch -c dev && git push -u origin dev`)
+
+**② 기본 브랜치를 `dev`로**
+`Settings → General → Default branch` → ⇄ 버튼 → `dev` → Update
+
+**③ 머지 방식 둘 다 켜기**
+`Settings → General → Pull Requests`
+- ✅ Allow merge commits
+- ✅ Allow squash merging
+- ⬜ Allow rebase merging (끄기)
+- ✅ Automatically delete head branches
+
+**④ 룰셋 2개** — `Settings → Rules → Rulesets`
+
+| | `main` 룰셋 (기존 것 수정) | `dev` 룰셋 (새로 만들기) |
+|---|---|---|
+| Ruleset name | `protect-main` | `protect-dev` |
+| Enforcement status | Active | Active |
+| Target branches | `Add target → Include by pattern → main` | `Add target → Include default branch` (또는 패턴 `dev`) |
+| Restrict deletions | ✅ | ✅ |
+| Block force pushes | ✅ | ✅ |
+| Require a pull request before merging | ✅ approvals `1` | ✅ approvals `1` |
+| └ Allowed merge methods | **Merge** 만 | **Squash** 만 |
+| Bypass list | 비워두기 | 비워두기 |
+
+> 기존 `main` 룰셋은 **지우지 말고** 수정만 하기. Target이 `Default branch`로 되어 있으면 기본 브랜치를 `dev`로 바꾼 순간 `main`이 보호에서 빠짐 → Target을 `Include by pattern: main`으로 바꾸기.
+> 공개 레포라 무료 Org에서도 룰셋이 강제됨.
 
 ## 9. 배포 확인 절차 (EC2 수동 배포)
 
 배포 담당: 예준 (보조 채민)
 
 1. **배포 예고** · 디스코드에 "몇 시에 배포, 포함 PR 번호" 공유. 배포 IP·주소도 미리 공유.
-2. **배포** · EC2에서 `main` 최신 받아 빌드·실행.
-3. **스모크 확인** (전부 통과해야 완료)
+2. **`dev` → `main` 배포 PR 머지** (7번, Merge commit)
+3. **배포** · EC2에서 `main` 최신 받아 빌드·실행.
+4. **스모크 확인** (전부 통과해야 완료)
    - [ ] `/health` 200 응답
    - [ ] 웹 화면 접속
    - [ ] 테스트 계정 로그인
    - [ ] 가상 계약서 업로드 → 결과 수신 (기능 연결된 뒤부터)
-4. **결과 공유** · 디스코드에 `배포 완료 / 커밋 해시 / 확인 항목 / 이상 여부`.
-5. **실패 시** · 이전 태그로 되돌리고 원인 이슈 생성 (`버그` 라벨).
+5. **결과 공유** · 디스코드에 `배포 완료 / 커밋 해시 / 확인 항목 / 이상 여부`.
+6. **실패 시** · EC2를 이전 태그로 되돌리고 원인 이슈 생성 (`버그` 라벨). 수정은 평소처럼 `fix/` 브랜치 → `dev` → 다시 배포 PR.
 
 ### 태그
-마일스톤마다 `main`에 태그: `v0.1.0`(12/9 첫 연동), `v0.2.0`(12/16 통합 시연), `v1.0.0`(12/27 최종). 롤백 기준점으로 씀.
+배포 PR 머지 직후 `main`에 태그: `v0.1.0`(12/9 첫 연동), `v0.2.0`(12/16 통합 시연), `v1.0.0`(12/27 최종). 롤백 기준점으로 씀.
 
 ### 기능 동결 (12/26 이후)
-`fix`만 머지. 새 기능 PR은 발표 후로.
+`dev`에 `fix`만 머지. 새 기능 PR은 발표 후로.
 
 ## 10. 보안·개인정보
 
