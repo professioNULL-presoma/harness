@@ -27,8 +27,8 @@
 | 현재 회원 | GET | `/auth/me` | O | 채민 | 개발 중 |
 | 현재 동의 문서 | GET | `/consent-documents/{type}` | X | 채민 | 개발 중 |
 | 계약서 업로드 | POST | `/contracts` | O | 예준 | 설계 중 |
-| 계약서 목록 | GET | `/contracts` | O | 채민 | 설계 중 |
-| 계약서 분석 결과 | GET | `/contracts/{id}/analysis` | O | 소희 | 설계 중 |
+| 계약서 목록 | GET | `/contracts` | O | 채민 | 개발 중 |
+| 계약서 분석 결과 | GET | `/contracts/{id}/analysis` | O | 소희 | 개발 중 |
 
 상태: `설계 중` → `개발 중` → `완료`
 
@@ -82,6 +82,30 @@ JSON으로 `email`과 `password`를 보낸다. 발급된 JWT는 1시간 동안 �
 | 200 | `data: { id, nickname }` |
 | 401 | `INVALID_ACCESS_TOKEN` |
 | 503 | `AUTH_UNAVAILABLE` |
+
+## 계약서 내역과 분석 결과
+
+두 API에 `Authorization: Bearer <accessToken>`을 보낸다.
+
+### GET `/contracts`
+
+로그인한 회원의 삭제되지 않은 계약서를 최신순으로 반환한다. `data`는 배열이며 항목은 `{ id, title, processingStatus, createdAt }`이다. 내역이 없으면 빈 배열을 반환한다. 제목이 없는 계약서는 `title`이 `null`이다.
+
+`processingStatus` 값은 `UPLOADED`, `OCR_PROCESSING`, `RETAKE_REQUIRED`, `EXTRACTING`, `REVIEWING`, `COMPLETED`, `FAILED`다.
+
+### GET `/contracts/{id}/analysis`
+
+현재 공개된 성공 결과를 반환한다. 재분석이 실패한 뒤에도 이전 공개 결과가 있으면 읽을 수 있다. `processingStatus`는 현재 계약서 상태이며, `completedAt`은 공개된 리뷰의 완료 시각이다.
+
+| HTTP | 응답 |
+|---|---|
+| 200 | `data: { contractId, title, processingStatus, reviewId, summary, findings, completedAt, conditions }` |
+| 400 | `INVALID_INPUT` |
+| 401 | `INVALID_ACCESS_TOKEN` |
+| 404 | `CONTRACT_NOT_FOUND`. 없는 계약서, 삭제된 계약서, 다른 회원 계약서는 같은 코드로 응답한다. |
+| 409 | `ANALYSIS_NOT_READY`. 현재 공개된 분석 결과가 없다. |
+
+`conditions`에는 `propertyType`, `propertyAddressMasked`, `depositAmount`, `monthlyRentAmount`, `maintenanceFeeAmount`가 들어 있다. 추출되지 않은 필드는 `null`이다. 금액은 원 단위다. `findings`는 저장된 검토 항목 배열이며 항목 내부 필드는 AI와 프론트 연동 작업에서 확정한다.
 
 ## 상세 (작성 예시)
 
