@@ -19,6 +19,7 @@
 |---|---|
 | [CONVENTION.md](CONVENTION.md) | 브랜치, 커밋, 이슈, PR, 리뷰, 배포, 보안 규칙 |
 | [docs/api.md](docs/api.md) | API 명세 |
+| [docs/findings.md](docs/findings.md) | 분석 결과(findings)·정답셋 형식, 일치율 계산 초안 |
 
 ## 일정
 
